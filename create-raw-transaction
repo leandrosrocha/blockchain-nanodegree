@@ -1,0 +1,14 @@
+// createrawtransaction '[{"txid":"TXID", "vout": VOUT}]´´{"TO ADDRESS", AMOUNT, "FROM ADDRESS": AMOUNT}'
+
+//Txid: 3572a9c64abba2ce24efece8f5e0f02fa7b94d66ecd4a8f56ab21f6fed25fa5b
+
+// VOUT: 1
+
+// To: 2N9qxEgz3dTTWZHMX5CZsZpdHyNM5gC7N8Z Amount1 is 0.0008
+
+// From: 2Mx2ihbEuyjQuT3iUhRFuCbWu2nw6AGjCmk Amount2 is 0.01090473, since we will pay a little for the gas
+
+createrawtransaction '[{"txid": "3572a9c64abba2ce24efece8f5e0f02fa7b94d66ecd4a8f56ab21f6fed25fa5b", "vout":1}]' '{"2N9qxEgz3dTTWZHMX5CZsZpdHyNM5gC7N8Z": 0.0008, "2Mx2ihbEuyjQuT3iUhRFuCbWu2nw6AGjCmk": 0.01090473}'
+
+
+// hex string 0200000001dd604ebdd8a96a08e22f01f66bd517a0124f34ec568279ef561dc8a8d9bfe3ff0100000000ffffffff02881300000000000016001416215fa97bc19b6fa2f4d14f1676e696bf3607968c0a000000000000160014e7eac5f8ccf9d82367c1893257867eb6cbcfd80600000000
