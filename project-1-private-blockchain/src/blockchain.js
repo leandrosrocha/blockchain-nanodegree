@@ -63,21 +63,18 @@ class Blockchain {
   _addBlock(block) {
     let self = this;
     return new Promise(async (resolve, reject) => {
-      if (self.height > -1) {
+      block.time = self.getCurrentTimestamp();
+      block.height = self.chain.length;
+      if (block.height > 0) {
         const previousBlock = self.getLatestBlock();
         block.previousBlockHash = previousBlock.hash;
       }
-
-      block.time = self.getCurrentTimestamp();
-      block.height = self.chain.length;
       block.hash = SHA256(JSON.stringify(block).toString());
       try {
         self.chain.push(block);
         self.height = block.height;
         resolve(block);
       } catch (e) {
-        console.log(e);
-        // [Error: Uh oh!]
         reject(e);
       }
     });
@@ -129,10 +126,9 @@ class Blockchain {
         const block = new BlockClass.Block({ owner: address, star });
         self._addBlock(block).then((addedBlock) => {
           resolve(addedBlock);
-          // expected output: "Success!"
         });
       } else {
-        reject("Time elapsed is greater than 5 minutes");
+        reject(new Error("Time elapsed is greater than 5 minutes"));
       }
     });
   }
@@ -174,7 +170,7 @@ class Blockchain {
 
   // getLatest block method
   getLatestBlock() {
-    if (this.chain.length === 0) return null;
+    if (!this.chain.length) return null;
     return this.chain[this.chain.length - 1];
   }
 
@@ -193,30 +189,20 @@ class Blockchain {
     let stars = [];
     return new Promise((resolve, reject) => {
       const blockDataPromises = self.chain.map((block) => {
-        const bDataPromise = block.getBData();
-        return bDataPromise
-          .then((blockData) => {
-            if (!blockData) {
-              return null;
-            } else if (blockData.owner === address) {
-              return blockData.star;
-            }
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      });
-      Promise.all(blockDataPromises).then((starArray) => {
-        starArray.map((star) => {
-          if (star) {
-            stars.push(star);
+        return block.getBData().then((blockData) => {
+          if (!blockData) {
+            return null;
+          } else if (blockData.owner === address) {
+            return blockData.star;
           }
         });
-
+      });
+      Promise.all(blockDataPromises).then((starArray) => {
+        stars = starArray.filter((star) => star);
         if (stars.length > 0) {
           resolve(stars);
         } else {
-          reject("No stars with address");
+          reject(null);
         }
       });
     });

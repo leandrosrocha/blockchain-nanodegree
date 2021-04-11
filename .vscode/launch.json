@@ -9,7 +9,7 @@
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/project_1_v2_boilerplate/app.js"
+      "program": "${workspaceFolder}/project-1-private-blockchain/app.js"
     }
   ]
 }
