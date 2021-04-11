@@ -63,20 +63,22 @@ class Blockchain {
   _addBlock(block) {
     let self = this;
     return new Promise(async (resolve, reject) => {
-      if (this.chain.length > 0) {
-        block.previousHash = this.getLatestBlock().hash;
+      if (self.height > -1) {
+        const previousBlock = self.getLatestBlock();
+        block.previousBlockHash = previousBlock.hash;
       }
-      block.height = this.chain.length + 1;
-      block.time = getCurrentTimestamp();
+
+      block.time = self.getCurrentTimestamp();
+      block.height = self.chain.length;
       block.hash = SHA256(JSON.stringify(block).toString());
-      console.log(JSON.stringify(block));
       try {
-        this.chain.push(block);
+        self.chain.push(block);
+        self.height = block.height;
         resolve(block);
       } catch (e) {
         console.log(e);
         // [Error: Uh oh!]
-        reject("Error adding block");
+        reject(e);
       }
     });
   }
@@ -90,9 +92,11 @@ class Blockchain {
    * @param {*} address
    */
   requestMessageOwnershipVerification(address) {
+    let self = this;
     return new Promise((resolve) => {
-      const timeStamp = getCurrentTimestamp();
-      return adress + ":" + timeStamp + ":" + "starRegistry";
+      const timeStamp = self.getCurrentTimestamp();
+      const message = address + ":" + timeStamp + ":" + "starRegistry";
+      resolve(message);
     });
   }
 
@@ -118,16 +122,17 @@ class Blockchain {
 
     return new Promise(async (resolve, reject) => {
       //Get the time from the message sent as a parameter:
-      const currentTime = parseInt(this.getCurrentTimestamp());
       const messageTime = parseInt(message.split(":")[1]);
+      const currentTime = parseInt(self.getCurrentTimestamp());
       if (currentTime - messageTime < 5 * 60 * 1000) {
         bitcoinMessage.verify(message, address, signature);
-        let block = new BlockClass.Block({ owner: address, star });
-        this._addBlock(block).then((value) => {
-          console.log(value);
-          resolve(value);
+        const block = new BlockClass.Block({ owner: address, star });
+        self._addBlock(block).then((addedBlock) => {
+          resolve(addedBlock);
           // expected output: "Success!"
         });
+      } else {
+        reject("Time elapsed is greater than 5 minutes");
       }
     });
   }
@@ -169,11 +174,12 @@ class Blockchain {
 
   // getLatest block method
   getLatestBlock() {
+    if (this.chain.length === 0) return null;
     return this.chain[this.chain.length - 1];
   }
 
   getCurrentTimestamp() {
-    new Date().getTime().toString().slice(0, -3);
+    return new Date().getTime().toString().slice(0, -3);
   }
 
   /**
@@ -186,17 +192,33 @@ class Blockchain {
     let self = this;
     let stars = [];
     return new Promise((resolve, reject) => {
-      stars = self.chain.map((block) => {
-        const blockData = block.getBData();
-        if (blockData.owner === address) {
-          return blockData.star;
+      const blockDataPromises = self.chain.map((block) => {
+        const bDataPromise = block.getBData();
+        return bDataPromise
+          .then((blockData) => {
+            if (!blockData) {
+              return null;
+            } else if (blockData.owner === address) {
+              return blockData.star;
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      });
+      Promise.all(blockDataPromises).then((starArray) => {
+        starArray.map((star) => {
+          if (star) {
+            stars.push(star);
+          }
+        });
+
+        if (stars.length > 0) {
+          resolve(stars);
+        } else {
+          reject("No stars with address");
         }
       });
-      if (stars.length > 0) {
-        resolve(stars);
-      } else {
-        reject("Error");
-      }
     });
   }
 
@@ -210,19 +232,25 @@ class Blockchain {
     let self = this;
     let errorLog = [];
     return new Promise(async (resolve, reject) => {
-      latestesHeight = self.chain.length - 1;
+      latestesHeight = self.chain.length;
       for (let height = latestesHeight; height > 0; height--) {
         const currentBlock = self.chain.getBlockByHeight(height);
         const blockValid = currentBlock.validate();
         if (blockValid) {
-          const previousBlock = self.chain.getBlockByHash(
-            currentBlock.previousHash
-          );
-          if (currentBlock.previousHash == previousBlock.hash) {
-            errorLog.push("Chain invalid");
+          previousBlockHash = currentBlock.previousHash;
+          if (previousBlockHash) {
+            const previousBlock = self.chain.getBlockByHash(previousBlockHash);
+            if (currentBlock.previousHash !== previousBlock.hash) {
+              errorLog.push(
+                "Previous hash value of block" +
+                  currentBlock.previousHash +
+                  " does not match hash of previous block" +
+                  previousBlock.hash
+              );
+            }
           }
         } else {
-          errorLog.push("Block invalid");
+          errorLog.push("Block " + block.hash + " is invalid");
         }
       }
       if (!errorLog.length) {
