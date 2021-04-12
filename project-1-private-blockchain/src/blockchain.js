@@ -34,7 +34,9 @@ class Blockchain {
    */
   async initializeChain() {
     if (this.height === -1) {
-      let block = new BlockClass.Block({ data: "Genesis Block" });
+      let block = new BlockClass.Block({
+        data: "Genesis Block",
+      });
       await this._addBlock(block);
     }
   }
@@ -63,20 +65,19 @@ class Blockchain {
   _addBlock(block) {
     let self = this;
     return new Promise(async (resolve, reject) => {
+      console.log("addBLOCK");
       block.time = self.getCurrentTimestamp();
       block.height = self.chain.length;
       if (block.height > 0) {
         const previousBlock = self.getLatestBlock();
         block.previousBlockHash = previousBlock.hash;
       }
-      block.hash = SHA256(JSON.stringify(block).toString());
-      try {
-        self.chain.push(block);
-        self.height = block.height;
+      block.hash = SHA256(JSON.stringify(block));
+      self.height = block.height;
+      self.chain.push(block);
+      self.validateChain().then((errorLog) => {
         resolve(block);
-      } catch (e) {
-        reject(e);
-      }
+      });
     });
   }
 
@@ -146,7 +147,7 @@ class Blockchain {
       if (block) {
         resolve(block);
       } else {
-        reject(null);
+        resolve(null);
       }
     });
   }
@@ -159,10 +160,13 @@ class Blockchain {
   getBlockByHeight(height) {
     let self = this;
     return new Promise((resolve, reject) => {
-      let block = self.chain.filter((p) => p.height === height)[0];
+      let block = self.chain.filter((b) => b.height === height)[0];
       if (block) {
-        resolve(block);
+        block.validate().then((isValid) => {
+          resolve(block);
+        });
       } else {
+        console.log("AAAAAAAAAAA");
         resolve(null);
       }
     });
@@ -202,7 +206,7 @@ class Blockchain {
         if (stars.length > 0) {
           resolve(stars);
         } else {
-          reject(null);
+          resolve(null);
         }
       });
     });
@@ -218,31 +222,45 @@ class Blockchain {
     let self = this;
     let errorLog = [];
     return new Promise(async (resolve, reject) => {
-      latestesHeight = self.chain.length;
+      const latestesHeight = self.chain.length - 1;
+      console.log("HEIGHT", latestesHeight);
       for (let height = latestesHeight; height > 0; height--) {
-        const currentBlock = self.chain.getBlockByHeight(height);
-        const blockValid = currentBlock.validate();
-        if (blockValid) {
-          previousBlockHash = currentBlock.previousHash;
-          if (previousBlockHash) {
-            const previousBlock = self.chain.getBlockByHash(previousBlockHash);
-            if (currentBlock.previousHash !== previousBlock.hash) {
-              errorLog.push(
-                "Previous hash value of block" +
-                  currentBlock.previousHash +
-                  " does not match hash of previous block" +
-                  previousBlock.hash
+        try {
+          const block = await self.getBlockByHeight(height);
+          console.log("BLOCK", block.height);
+          const validBlock = await block.validate();
+          console.log("TESTE 2");
+          if (!validBlock) {
+            errorLog.push(new Error(`Block ${block.height} is invalid!`));
+          } else {
+            const currentBlockPreviousHash = block.previousHash;
+            if (currentBlockPreviousHash) {
+              const previousBlock = await self.getBlockByHash(
+                currentBlockPreviousHash
               );
+              if (currentBlockPreviousHash !== previousBlock.hash) {
+                errorLog.push(
+                  new Error(
+                    `Block ${block.height} has a previous block hash value that is different from the hash of the previous block`
+                  )
+                );
+              }
             }
           }
-        } else {
-          errorLog.push("Block " + block.hash + " is invalid");
+        } catch (error) {
+          console.log(error);
         }
       }
       if (!errorLog.length) {
         resolve(errorLog);
       } else {
-        reject(errorLog);
+        errorLog.forEach((error) => {
+          console.log(error);
+        });
+        reject(errorLog).catch((error) => {
+          console.log(error);
+          throw error;
+        });
       }
     });
   }
