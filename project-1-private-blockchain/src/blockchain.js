@@ -71,12 +71,6 @@ class Blockchain {
         const previousBlock = await self.getBlockByHeight(block.height - 1);
         block.previousBlockHash = previousBlock.hash;
       }
-      // if (block.height === 1) {
-      //   block.previousBlockHash = 123;
-      // }
-      // if (block.height === 2) {
-      //   block.previousBlockHash = 456;
-      // }
 
       block.hash = SHA256(JSON.stringify(block));
       self.height = block.height;
@@ -138,7 +132,6 @@ class Blockchain {
         const addedBlock = await self._addBlock(block);
         resolve(addedBlock);
       } else {
-        console.log("ERROR TIME");
         reject(new Error("Time elapsed is greater than 5 minutes"));
       }
     });
