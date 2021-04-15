@@ -145,7 +145,7 @@ class BlockchainController {
     });
   }
 
-  // Endpoint that allows user to request Ownership of a Wallet address (POST Endpoint)
+  // Endpoint that allows user to tamper with a block (POST Endpoint)
   tamperWithBlock(height) {
     this.app.post("/tamperWithBlock", async (req, res) => {
       if (req.body.height) {
@@ -162,10 +162,10 @@ class BlockchainController {
     });
   }
 
-  // Endpoint that allows user to request Ownership of a Wallet address (POST Endpoint)
+  // Endpoint that allows user to tamper with the blockchain (POST Endpoint)
   tamperWithChain(height) {
     this.app.post("/tamperWithChain", async (req, res) => {
-      if (req.body.height) {
+      if (req.body.height !== undefined) {
         const height = req.body.height;
         const tamperedBlock = await this.blockchain.tamperWithChain(height);
         if (tamperedBlock) {

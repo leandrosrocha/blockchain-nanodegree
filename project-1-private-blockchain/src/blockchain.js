@@ -174,23 +174,23 @@ class Blockchain {
     });
   }
 
-  tamperWithBlock(height) {
-    const block = await.self.getBlockByHeight(height);
+  async tamperWithBlock(height) {
+    const block = await this.getBlockByHeight(height);
     if (block) {
       block.time = 3;
-      resolve(block);
+      return block;
     } else {
-      resolve(null);
+      return null;
     }
   }
 
-  tamperWithChain(height) {
-    const block = await.self.getBlockByHeight(height);
+  async tamperWithChain(height) {
+    const block = await this.getBlockByHeight(height);
     if (block) {
       block.previousBlockHash = 123456;
-      resolve(block);
+      return block;
     } else {
-      resolve(null);
+      return null;
     }
   }
 
