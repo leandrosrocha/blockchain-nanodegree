@@ -135,7 +135,7 @@ class BlockchainController {
       try {
         const errorLog = await this.blockchain.validateChain();
         if (!errorLog.length) {
-          return res.status(200).send("Block was validated sucessfully");
+          return res.status(200).send("Blockchain was validated sucessfully");
         } else {
           return res.status(500).json(errorLog);
         }
