@@ -12,17 +12,13 @@ class BlockchainController {
     this.blockchain = blockchainObj;
     // All the endpoints methods needs to be called in the constructor to initialize the route.
     this.getBlockByHeight();
-    console.log("TESTE 1");
     this.requestOwnership();
-    console.log("TESTE 2");
     this.submitStar();
-    console.log("TESTE 3");
     this.getBlockByHash();
-    console.log("TESTE 4");
     this.getStarsByOwner();
-    console.log("TESTE 5");
     this.validateBlockchain();
-    console.log("TESTE 6");
+    this.tamperWithBlock();
+    this.tamperWithChain();
   }
 
   // Enpoint to Get a Block by Height (GET Endpoint)
@@ -135,17 +131,50 @@ class BlockchainController {
 
   //This endpoint allows you to validate the blockchain
   validateBlockchain() {
-    console.log("validate");
     this.app.get("/validateBlockchain", async (req, res) => {
       try {
-        const isChainValid = await this.blockchain.validateChain();
-        if (isChainValid) {
+        const errorLog = await this.blockchain.validateChain();
+        if (!errorLog.length) {
           return res.status(200).send("Block was validated sucessfully");
+        } else {
+          return res.status(500).json(errorLog);
+        }
+      } catch (error) {
+        return res.status(500).send(error);
+      }
+    });
+  }
+
+  // Endpoint that allows user to request Ownership of a Wallet address (POST Endpoint)
+  tamperWithBlock(height) {
+    this.app.post("/tamperWithBlock", async (req, res) => {
+      if (req.body.height) {
+        const height = req.body.height;
+        const tamperedBlock = await this.blockchain.tamperWithBlock(height);
+        if (tamperedBlock) {
+          return res.status(200).json(tamperedBlock);
         } else {
           return res.status(500).send("An error happened!");
         }
-      } catch (error) {
-        return res.status(500).json(errors);
+      } else {
+        return res.status(500).send("Check the Body Parameter!");
+      }
+    });
+  }
+
+  // Endpoint that allows user to request Ownership of a Wallet address (POST Endpoint)
+  tamperWithChain(height) {
+    this.app.post("/tamperWithChain", async (req, res) => {
+      if (req.body.height) {
+        const height = req.body.height;
+        const tamperedBlock = await this.blockchain.tamperWithChain(height);
+        if (tamperedBlock) {
+          return res.status(200).json(tamperedBlock);
+        } else {
+          return res.status(500).send("An error happened!");
+        }
+      } else {
+        return res.status(500).send("Check the Body Parameter!");
       }
     });
   }

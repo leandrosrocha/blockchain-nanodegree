@@ -65,19 +65,29 @@ class Blockchain {
   _addBlock(block) {
     let self = this;
     return new Promise(async (resolve, reject) => {
-      console.log("addBLOCK");
       block.time = self.getCurrentTimestamp();
       block.height = self.chain.length;
       if (block.height > 0) {
-        const previousBlock = self.getLatestBlock();
+        const previousBlock = await self.getBlockByHeight(block.height - 1);
         block.previousBlockHash = previousBlock.hash;
       }
+      // if (block.height === 1) {
+      //   block.previousBlockHash = 123;
+      // }
+      // if (block.height === 2) {
+      //   block.previousBlockHash = 456;
+      // }
+
       block.hash = SHA256(JSON.stringify(block));
       self.height = block.height;
       self.chain.push(block);
-      self.validateChain().then((errorLog) => {
+      const errorLog = await self.validateChain();
+      if (!errorLog.length) {
         resolve(block);
-      });
+      } else {
+        self.chain.pop();
+        reject(errorLog);
+      }
     });
   }
 
@@ -125,10 +135,10 @@ class Blockchain {
       if (currentTime - messageTime < 5 * 60 * 1000) {
         bitcoinMessage.verify(message, address, signature);
         const block = new BlockClass.Block({ owner: address, star });
-        self._addBlock(block).then((addedBlock) => {
-          resolve(addedBlock);
-        });
+        const addedBlock = await self._addBlock(block);
+        resolve(addedBlock);
       } else {
+        console.log("ERROR TIME");
         reject(new Error("Time elapsed is greater than 5 minutes"));
       }
     });
@@ -166,10 +176,29 @@ class Blockchain {
           resolve(block);
         });
       } else {
-        console.log("AAAAAAAAAAA");
         resolve(null);
       }
     });
+  }
+
+  tamperWithBlock(height) {
+    const block = await.self.getBlockByHeight(height);
+    if (block) {
+      block.time = 3;
+      resolve(block);
+    } else {
+      resolve(null);
+    }
+  }
+
+  tamperWithChain(height) {
+    const block = await.self.getBlockByHeight(height);
+    if (block) {
+      block.previousBlockHash = 123456;
+      resolve(block);
+    } else {
+      resolve(null);
+    }
   }
 
   // getLatest block method
@@ -221,47 +250,30 @@ class Blockchain {
   validateChain() {
     let self = this;
     let errorLog = [];
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       const latestesHeight = self.chain.length - 1;
-      console.log("HEIGHT", latestesHeight);
       for (let height = latestesHeight; height > 0; height--) {
-        try {
-          const block = await self.getBlockByHeight(height);
-          console.log("BLOCK", block.height);
-          const validBlock = await block.validate();
-          console.log("TESTE 2");
-          if (!validBlock) {
-            errorLog.push(new Error(`Block ${block.height} is invalid!`));
-          } else {
-            const currentBlockPreviousHash = block.previousHash;
-            if (currentBlockPreviousHash) {
-              const previousBlock = await self.getBlockByHash(
-                currentBlockPreviousHash
-              );
-              if (currentBlockPreviousHash !== previousBlock.hash) {
-                errorLog.push(
-                  new Error(
-                    `Block ${block.height} has a previous block hash value that is different from the hash of the previous block`
-                  )
-                );
-              }
-            }
+        const block = await self.getBlockByHeight(height);
+        const validBlock = await block.validate();
+        if (!validBlock) {
+          errorLog.push(`Block ${block.height} is invalid!`);
+        }
+        const currentBlockPreviousHash = block.previousBlockHash;
+        if (currentBlockPreviousHash) {
+          const previousBlock = await self.getBlockByHash(
+            currentBlockPreviousHash
+          );
+          if (
+            !previousBlock ||
+            currentBlockPreviousHash !== previousBlock.hash
+          ) {
+            errorLog.push(
+              `Block ${block.height}'s previous block hash value does not match the hash of the previous block`
+            );
           }
-        } catch (error) {
-          console.log(error);
         }
       }
-      if (!errorLog.length) {
-        resolve(errorLog);
-      } else {
-        errorLog.forEach((error) => {
-          console.log(error);
-        });
-        reject(errorLog).catch((error) => {
-          console.log(error);
-          throw error;
-        });
-      }
+      resolve(errorLog);
     });
   }
 }
