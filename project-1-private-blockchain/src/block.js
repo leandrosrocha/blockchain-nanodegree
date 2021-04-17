@@ -37,14 +37,9 @@ class Block {
   validate() {
     let self = this;
     return new Promise((resolve, reject) => {
-      // Save in auxiliary variable the current block hash
-      ///let originalHash = self.hash;
-      // Erase current hash to make the object equal to when it was created
-      //self.hash = null;
-      /// Recalculate the hash of the Block
+      /// Recalculate the hash of the Block (with a null hash)
       let newHash = SHA256(JSON.stringify({ ...self, hash: null }));
-      // self.hash = originalHash;
-      // Comparing if the hashes changed
+      // Comparing if the hash changed
       if (newHash.toString() === self.hash.toString()) {
         // Returning the Block is valid
         resolve(true);
