@@ -38,14 +38,14 @@ class Block {
     let self = this;
     return new Promise((resolve, reject) => {
       // Save in auxiliary variable the current block hash
-      let originalHash = self.hash;
+      ///let originalHash = self.hash;
       // Erase current hash to make the object equal to when it was created
-      self.hash = null;
-      // Recalculate the hash of the Block
-      let newHash = SHA256(JSON.stringify(self));
-      self.hash = originalHash;
+      //self.hash = null;
+      /// Recalculate the hash of the Block
+      let newHash = SHA256(JSON.stringify({ ...self, hash: null }));
+      // self.hash = originalHash;
       // Comparing if the hashes changed
-      if (newHash.toString() === originalHash.toString()) {
+      if (newHash.toString() === self.hash.toString()) {
         // Returning the Block is valid
         resolve(true);
       } else {
