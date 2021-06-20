@@ -1,9 +1,9 @@
 {
   "devDependencies": {
-    "openzeppelin-solidity": "^4.1.0",
     "truffle": "^5.0.2"
   },
   "dependencies": {
+    "openzeppelin-solidity": "^2.1.2",
     "truffle-hdwallet-provider": "^1.0.17"
   }
 }
