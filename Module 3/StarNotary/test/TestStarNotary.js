@@ -84,20 +84,48 @@ it("can add the token name and symbol properly", async () => {
   assert.equal(tokenSymbol, await instance.symbol());
 });
 
+it("lookUptokenIdToStarInfo test", async () => {
+  // 1. create a Star with different tokenId
+  let tokenId = 6;
+  let instance = await StarNotary.deployed();
+  await instance.createStar("Awesome Star!", tokenId, { from: accounts[0] });
+  // 2. Call your method lookUptokenIdToStarInfo
+  // 3. Verify if you Star name is the same
+  assert.equal(
+    await instance.lookUptokenIdToStarInfo.call(tokenId),
+    "Awesome Star!"
+  );
+});
+
 it("lets 2 users exchange stars", async () => {
   // 1. create 2 Stars with different tokenId
+  const instance = await StarNotary.deployed();
+  const Star1TokenId = 7;
+  const Star1Name = "Star 1";
+  const owner1 = accounts[0];
+  const Star2TokenId = 8;
+  const Star2Name = "Star 2";
+  const owner2 = accounts[1];
+
+  await instance.createStar(Star1Name, Star1TokenId, { from: owner1 });
+  await instance.createStar(Star2Name, Star2TokenId, { from: owner2 });
   // 2. Call the exchangeStars functions implemented in the Smart Contract
+  await instance.exchangeStars(Star1TokenId, Star2TokenId, { from: owner1 });
   // 3. Verify that the owners changed
+  assert.equal(await instance.ownerOf.call(Star1TokenId), owner2);
+  assert.equal(await instance.ownerOf.call(Star2TokenId), owner1);
 });
 
 it("lets a user transfer a star", async () => {
   // 1. create a Star with different tokenId
+  let instance = await StarNotary.deployed();
+  const tokenId = 9;
+  const owner1 = accounts[0];
+  const owner2 = accounts[1];
+  await instance.createStar("Star name", tokenId, { from: owner1 });
   // 2. use the transferStar function implemented in the Smart Contract
-  // 3. Verify the star owner changed.
-});
+  await instance.transferStar(owner2, tokenId);
 
-it("lookUptokenIdToStarInfo test", async () => {
-  // 1. create a Star with different tokenId
-  // 2. Call your method lookUptokenIdToStarInfo
-  // 3. Verify if you Star name is the same
+  // 3. Verify the star owner changed.
+  assert.equal(await instance.ownerOf.call(tokenId), owner2);
 });
