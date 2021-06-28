@@ -24,10 +24,12 @@
 
 const HDWalletProvider = require("truffle-hdwallet-provider");
 const infuraKey = "27b298fcd8b24060871b9090e3c6a0dc";
-//
-// const fs = require('fs');
-const mnemonic =
-  "response rocket donate consider penalty mammal hope switch arrest dial invite call";
+
+const fs = require("fs");
+const mnemonic = fs
+  .readFileSync("/home/leandro/Desktop/Metamask test wallet")
+  .toString()
+  .trim();
 
 module.exports = {
   /**
